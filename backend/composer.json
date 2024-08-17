@@ -1,5 +1,6 @@
 {
     "require": {
-        "spatie/laravel-csp": "^2.10"
+        "spatie/laravel-csp": "^2.10",
+        "symfony/config": "^7.1"
     }
 }
