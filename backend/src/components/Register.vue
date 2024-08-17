@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits } from "vue";
+import { ref } from "vue";
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import GuestLayout from "../components/GuestLayout.vue";
 import SignWithGoogle from "./SignWithGoogle.vue";

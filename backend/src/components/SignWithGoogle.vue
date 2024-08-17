@@ -34,6 +34,9 @@ const uiConfig = {
   signInOptions: [
     {
       provider: GoogleAuthProvider.PROVIDER_ID,
+      customParameters: {
+        prompt: 'select_account'
+      },
       fullLabel: "Kirjaudu sisään Googlella"
     }
   ],
