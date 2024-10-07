@@ -88,9 +88,14 @@
   }
   
   .product-image {
-    width: 100%;
-    height: auto;
-  }
+  width: 100%;
+  height: auto;
+  transition: filter 0.3s ease; /* Smooth transition for darkening */
+}
+
+.product-item:hover .product-image {
+  filter: brightness(50%); /* Darken the image by reducing brightness */
+}
   
   .product-description {
     display: none;

@@ -2,7 +2,7 @@
   <div class="popup-overlay" v-show="visible" @click="handleOverlayClick">
     <Transition name="transitionPopUp" @after-enter="resetTransition">
       <div class="popup-content" v-show="visible" @click.stop>
-        <button class="popup-close" @click="closePopup">>></button>
+        <button class="popup-close" @click="closePopup">X</button>
         <component :is="currentForm" @switch-form="switchForm" />
       </div>
     </Transition>
@@ -66,7 +66,7 @@ const resetTransition = () => {
 .popup-close {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 20px;
   background: none;
   border: none;
   font-size: 24px;
