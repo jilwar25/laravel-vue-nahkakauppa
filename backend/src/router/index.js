@@ -6,11 +6,17 @@ import ResetPassword from "../components/ResetPassword.vue";
 import Register from "../components/Register.vue";
 import Products from '../components/Products.vue';
 import ProductDetails from '../components/ProductDetails.vue';
+import Checkout from "../components/Checkout.vue";
 
 const routes = [
     {
         path: '/',
         redirect: '/dashboard'
+    },
+    {
+        path: '/dashboard/checkout',
+        name: 'Checkout',
+        component: 'Checkout',
     },
     {
         path: '/dashboard',
