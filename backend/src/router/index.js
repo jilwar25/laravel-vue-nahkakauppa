@@ -4,6 +4,9 @@ import Login from "../components/Login.vue";
 import RequestPassword from "../components/RequestPassword.vue";
 import ResetPassword from "../components/ResetPassword.vue";
 import Register from "../components/Register.vue";
+import Products from '../components/Products.vue';
+import ProductDetails from '../components/ProductDetails.vue';
+import Checkout from "../components/Checkout.vue";
 
 const routes = [
     {
@@ -11,9 +14,20 @@ const routes = [
         redirect: '/dashboard'
     },
     {
+        path: '/dashboard/checkout',
+        name: 'Checkout',
+        component: 'Checkout',
+    },
+    {
         path: '/dashboard',
-        name: 'dashboard',
-        component: Dashboard
+        component: Products, // Product listing page
+
+    },
+    {
+        path: '/products/:id',
+        component: ProductDetails,
+        name: 'ProductDetails',
+        props: true,
     },
 
     {

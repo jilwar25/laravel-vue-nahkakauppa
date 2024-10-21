@@ -1,9 +1,23 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col items-center">
     <div class="w-full max-w-4xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
-      <p class="text-gray-600 mb-6">Welcome to the dashboard. Here you can view your data.</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-4">Josali</h1>
+      <p class="text-gray-600 mb-6">Tervetuloa nahkakaupan u.</p>
+
       <div class="flex justify-end mb-8">
+        <!-- ShoppingCart popup -->
+        <button
+          @click="showCartPopup"
+          class="bg-yellow-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-600"
+        >
+          🛒 Open Cart
+        </button>
+
+        <ShoppingCartPopup
+          :visible="showCart"
+          @update:visible="showCart = $event"
+        />
+
         <button
           @click="handleSignOut"
           v-if="isLoggedIn"
@@ -11,6 +25,7 @@
         >
           Kirjaudu ulos
         </button>
+
         <button
           @click="showLoginPopup"
           v-else
@@ -20,9 +35,9 @@
         </button>
       </div>
 
+      <!-- Dynamically load the component based on the current route -->
       <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Your Data Overview</h2>
-        <!-- Add your dashboard content here -->
+        <router-view />  <!-- This will render Products or ProductDetails based on the route -->
       </div>
     </div>
 
@@ -41,9 +56,11 @@
 import { ref, onMounted, defineEmits } from 'vue';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import PopupWrapper from '../components/PopUp.vue';
+import ShoppingCartPopup from '../components/ShoppingCartPopup.vue';
 
 const isLoggedIn = ref(false);
 const showLogin = ref(false);
+const showCart = ref(false);
 
 const emit = defineEmits(['switch-form']);
 
@@ -59,7 +76,11 @@ const handleSignOut = async () => {
 };
 
 const showLoginPopup = () => {
-  showLogin.value = true; // Set visibility to true to show the popup
+  showLogin.value = true;
+};
+
+const showCartPopup = () => {
+  showCart.value = true;
 };
 
 onMounted(() => {
