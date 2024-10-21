@@ -40,7 +40,7 @@ use Symfony\Component\HttpKernel\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\MergeExtensionConfigurationPass;
 
 // Help opcache.preload discover always-needed symbols
-class_exists(ConfigCache::class);
+class_exists(\Symfony\Component\Config\ConfigCache::class);
 
 /**
  * The Kernel is the heart of the Symfony system.
@@ -59,11 +59,6 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
      */
     protected array $bundles = [];
 
-    protected $middlewareGroups = [
-        'web' => [
-            \Spatie\Csp\AddCspHeaders::Class
-        ],
-    ],
 
     protected ?ContainerInterface $container = null;
     protected bool $booted = false;

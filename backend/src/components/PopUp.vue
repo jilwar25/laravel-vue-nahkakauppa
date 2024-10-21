@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { shallowRef, defineEmits, defineProps } from 'vue';
+import { shallowRef, defineProps } from 'vue';
 import Login from './Login.vue';
 import Register from './Register.vue';
 

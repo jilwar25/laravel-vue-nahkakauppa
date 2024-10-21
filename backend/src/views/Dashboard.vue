@@ -68,7 +68,6 @@ const handleSignOut = async () => {
   try {
     await signOut(getAuth());
     isLoggedIn.value = false;
-    resetFirebaseUi();
     emit('switch-form', 'login');
     console.log('User signed out');
   } catch (error) {
