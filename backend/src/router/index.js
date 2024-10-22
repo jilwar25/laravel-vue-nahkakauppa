@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Dashboard from "../views/Dashboard.vue";
 import Login from "../components/Login.vue";
 import RequestPassword from "../components/RequestPassword.vue";
 import ResetPassword from "../components/ResetPassword.vue";
@@ -14,9 +13,9 @@ const routes = [
         redirect: '/dashboard'
     },
     {
-        path: '/dashboard/checkout',
+        path: '/checkout',
         name: 'Checkout',
-        component: 'Checkout',
+        component: Checkout
     },
     {
         path: '/dashboard',

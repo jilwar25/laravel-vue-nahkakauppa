@@ -39,6 +39,7 @@
 <script setup>
 import { watch, defineEmits, defineProps, computed } from 'vue';
 import { useShoppingCart } from '../composables/shoppingCartConfig'; // Import cart logic
+import { useRouter } from 'vue-router';
 
 // Props to control visibility
 const props = defineProps({
@@ -100,11 +101,14 @@ const handleUpdateQuantity = (item, change) => {
   }
 };
 
+const router = useRouter();
+
 // Proceed to checkout logic
 const proceedToCheckout = () => {
   closeCart(); // Close the cart popup
   router.push({ name: 'Checkout' }); // Navigate to checkout route
 };
+
 </script>
 
 <style scoped>
