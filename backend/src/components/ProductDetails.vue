@@ -18,9 +18,12 @@
         <div class="variation-selection mt-4" v-if="variations.length > 0 && selectedVariation">
           <label for="variation">Choose a variation:</label>
           <select v-model="selectedVariation" @change="updateColorOptions">
-            <option v-for="variation in variations" :key="variation.id" :value="variation">
-              {{ variation.quality }} - ${{ variation.price }}
+            <option v-for="variation in variations" :key="variation.quality" :value="variation">
+              {{ variation.quality }} - {{ variation.price }} €
             </option>
+
+
+
           </select>
         </div>
 
@@ -42,7 +45,7 @@
 
         <!-- Custom Popup Alert -->
         <div v-if="showAlert" class="popup-alert">
-          <p>{{ product.name }} ({{ selectedColor }}) has been added to your cart!</p>
+          <p>{{ product.name }} {{ selectedVariation.quality }} ({{ selectedColor }}) has been added to your cart!</p>
         </div>
       </div>
     </div>
@@ -82,12 +85,12 @@ const fetchProductDetails = async () => {
 
   if (productSnap.exists()) {
     const productData = productSnap.data();
-    product.value = productData;
+    product.value = { ...productData, id: productId }; // Add the product ID here
 
     // Fetch variations (quality and colors)
     const variationsSnap = await getDocs(collection(productRef, 'variations'));
     variations.value = variationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
     if (variations.value.length > 0) {
       selectedVariation.value = variations.value[0]; // Default to first variation
       selectedColor.value = Object.keys(selectedVariation.value.colors)[0]; // Default to first color
@@ -125,9 +128,11 @@ const handleAddToCart = () => {
       id: product.value.id,
       name: product.value.name,
       price: selectedVariation.value.price,
-      variation: selectedVariation.value.quality,
-      color: selectedColor.value,  // Use color name
-      quantity: selectedVariation.value.colors[selectedColor.value], // Use color quantity
+      variation: {  // Combine quality and color into the variation object
+        quality: selectedVariation.value.quality,
+        color: selectedColor.value,
+      },
+      quantity: 1, // Assuming you're adding 1 item at a time
       imageUrl: imageUrl.value,
     });
 
@@ -138,6 +143,7 @@ const handleAddToCart = () => {
     }, 3000);
   }
 };
+
 
 onMounted(() => {
   fetchProductDetails();

@@ -11,8 +11,10 @@
             <li v-for="(item, index) in groupedCartItems" :key="index" class="cart-item">
               <img :src="item.imageUrl" alt="Product image" class="cart-item-image" />
               <div class="cart-item-info">
+                <!-- Display product name, quality, and color -->
                 <p class="cart-item-name">{{ item.quantity }} x {{ item.name }}</p>
-                <p class="cart-item-price">Price: ${{ item.price * item.quantity }}</p>
+                <p class="cart-item-details">Laatu: {{ item.variation.quality }}, Väri: {{ item.variation.color }}</p>
+                <p class="cart-item-price">Hinta: {{ item.price * item.quantity }} €</p>
                 <div class="cart-item-quantity">
                   <!-- Update quantity buttons -->
                   <button @click="handleUpdateQuantity(item, -1)">-</button>
@@ -75,16 +77,18 @@ watch(
   }
 );
 
-// Group cart items by product id and calculate the total quantity per product
+// Group cart items by id, quality, and color
 const groupedCartItems = computed(() => {
   const grouped = {};
 
-  // Group items by their id and accumulate the quantity
+  // Group items by their id, quality, and color
   cartItems.value.forEach((item) => {
-    if (grouped[item.id]) {
-      grouped[item.id].quantity += item.quantity;
+    const key = `${item.id}-${item.variation.quality}-${item.variation.color}`;
+
+    if (grouped[key]) {
+      grouped[key].quantity += item.quantity;
     } else {
-      grouped[item.id] = { ...item };
+      grouped[key] = { ...item };
     }
   });
 
@@ -169,6 +173,10 @@ const proceedToCheckout = () => {
 
 .cart-item-name {
   font-weight: bold;
+}
+
+.cart-item-details {
+  color: #777;
 }
 
 .cart-item-price {

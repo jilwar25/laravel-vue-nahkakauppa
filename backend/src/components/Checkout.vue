@@ -2,13 +2,14 @@
   <div class="checkout">
     <h1>Checkout</h1>
     <p>Proceed with your purchase here!</p>
-    <div v-for="item in cartItems" :key="item.id" class="checkout-item">
+    <div v-for="item in cartItems" :key="`${item.id}-${item.variation.quality}-${item.variation.color}`" class="checkout-item">
       <div class="item-info">
         <img :src="item.imageUrl" alt="Product image" class="product-image" />
         <div class="item-details">
           <h3 class="product-name">{{ item.name }}</h3>
           <p class="product-description">{{ item.description }}</p>
-          <p class="product-price">Price: ${{ item.price }}</p>
+          <p class="product-variation">Laatu: {{ item.variation.quality }}, Väri: {{ item.variation.color }}</p>
+          <p class="product-price">Hinta: {{ item.price * item.quantity }} €</p>
         </div>
       </div>
       <div class="item-actions">
@@ -16,7 +17,6 @@
           <!-- If quantity > 1, show the - button, else show the remove button -->
           <button v-if="item.quantity > 1" @click="updateQuantity(item, -1)" class="quantity-btn">-</button>
           <button v-else @click="removeFromCart(item)" class="remove-btn">
-            <!-- Import TrashIcon for the remove button -->
             <TrashIcon class="h-5 w-5 text-white" />
           </button>
           <span class="quantity">{{ item.quantity }}</span>
@@ -28,8 +28,9 @@
   </div>
 </template>
 
+
 <script setup>
-import { computed, onMounted } from 'vue';
+import {  onMounted } from 'vue';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
 import firebaseConfig from '../plugins/firebaseConfig';
@@ -44,8 +45,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-const { cartItems, loadCart, updateQuantity, removeFromCart } = useShoppingCart();
+const { cartItems, loadCart, updateQuantity, removeFromCart, totalAmount } = useShoppingCart();
 
+// Fetch product details for each item in the cart
 const fetchProductDetails = async (cartItem) => {
   try {
     const productRef = doc(db, 'products', cartItem.id);
@@ -55,7 +57,7 @@ const fetchProductDetails = async (cartItem) => {
       const productData = productSnap.data();
       cartItem.name = productData.name;
       cartItem.description = productData.description;
-      cartItem.price = productData.price;
+      cartItem.price = productData.price; // Use the price from the database
 
       if (productData.imagePath) {
         const storageReference = storageRef(storage, productData.imagePath);
@@ -69,21 +71,21 @@ const fetchProductDetails = async (cartItem) => {
   }
 };
 
+// Fetch details for all cart items on mount
 const fetchCartDetails = async () => {
-  for (const item of cartItems.value) {
-    await fetchProductDetails(item);
-  }
+  const fetchPromises = cartItems.value.map(item => fetchProductDetails(item));
+  await Promise.all(fetchPromises);  // Wait for all fetches to complete
 };
 
-const totalAmount = computed(() => {
-  return cartItems.value.reduce((total, item) => total + item.price * item.quantity, 0);
-});
+
+// Compute the total amount for all items in the cart
 
 onMounted(() => {
   loadCart();
   fetchCartDetails();
 });
 </script>
+
 
 <style scoped>
 .checkout {
