@@ -14,7 +14,7 @@
                 <!-- Display product name, quality, and color -->
                 <p class="cart-item-name">{{ item.quantity }} x {{ item.name }}</p>
                 <p class="cart-item-details">Laatu: {{ item.variation.quality }}, Väri: {{ item.variation.color }}</p>
-                <p class="cart-item-price">Hinta: {{ item.price * item.quantity }} €</p>
+                <p class="cart-item-price">Hinta: {{ item.price }} €</p>
                 <div class="cart-item-quantity">
                   <!-- Update quantity buttons -->
                   <button @click="handleUpdateQuantity(item, -1)">-</button>

@@ -7,7 +7,10 @@
     <div class="product-content">
       <div class="left-section">
         <h1 class="text-3xl font-bold">{{ product.name }}</h1>
-        <img :src="imageUrl" alt="Product image" class="product-image mt-4" />
+
+        <!-- VueFlux Carousel for Color-based Image Selection -->
+        <VueFlux v-if="rscs.length > 0" ref="$vueFlux" :images="rscs" :options="options" :transitions="transitions" />
+
         <div class="description">
           <p class="mt-4">{{ product.description }}</p>
         </div>
@@ -17,35 +20,32 @@
         <!-- Variation Selection (e.g., Quality) -->
         <div class="variation-selection mt-4" v-if="variations.length > 0 && selectedVariation">
           <label for="variation">Choose a variation:</label>
-          <select v-model="selectedVariation" @change="updateColorOptions">
-            <option v-for="variation in variations" :key="variation.quality" :value="variation">
-              {{ variation.quality }} - {{ variation.price }} €
+          <select v-model="selectedVariation" @change="updatePriceAndColorOptions">
+            <option v-for="variation in variations" :key="variation.id" :value="variation">
+              {{ variation.id }}
             </option>
-
-
-
           </select>
         </div>
 
-        <!-- Color Selection (handling Map instead of array) -->
+        <!-- Color Selection -->
         <div class="color-selection mt-4" v-if="selectedVariation && selectedVariation.colors">
           <label for="color">Choose a color:</label>
-          <select v-model="selectedColor">
+          <select v-model="selectedColor" @change="updateColorImages">
             <option v-for="color in Object.keys(selectedVariation.colors)" :key="color" :value="color">
-              {{ color }} ({{ selectedVariation.colors[color] }} in stock)
+              {{ color }}
             </option>
           </select>
         </div>
 
-        <!-- Dynamic Price -->
-        <p class="text-xl font-semibold mt-4" v-if="selectedVariation">Price: ${{ selectedVariation.price }}</p>
+        <!-- Dynamic Price Display -->
+        <p class="text-xl font-semibold mt-4" v-if="selectedVariation">Price: {{ selectedVariation.price }} €</p>
 
         <!-- Add to Cart Button -->
         <button class="add-to-cart-button" @click="handleAddToCart" v-if="selectedVariation && selectedColor">Add to Cart</button>
 
         <!-- Custom Popup Alert -->
         <div v-if="showAlert" class="popup-alert">
-          <p>{{ product.name }} {{ selectedVariation.quality }} ({{ selectedColor }}) has been added to your cart!</p>
+          <p>{{ product.name }} {{ selectedVariation.id }} ({{ selectedColor }}) has been added to your cart!</p>
         </div>
       </div>
     </div>
@@ -56,26 +56,39 @@
   </div>
 </template>
 
-
-
-
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';  
+import { VueFlux, Slide, Img } from 'vue-flux';
+import { ref, reactive, shallowReactive, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getFirestore, doc, getDocs, collection, getDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
-import { useShoppingCart } from '../composables/shoppingCartConfig.js';  // Importing the cart composable
+import { useShoppingCart } from '../composables/shoppingCartConfig.js';
 
 const product = ref(null);
-const variations = ref([]); 
-const selectedVariation = ref(null);  // Default to null to avoid accessing undefined properties
-const selectedColor = ref(null);  // Default to null to avoid accessing undefined properties
-const imageUrl = ref(null);
+const variations = ref([]);
+const selectedVariation = ref(null);
+const selectedColor = ref(null);
+const rscs = shallowReactive([]);  // Dynamic image array for VueFlux
 const showAlert = ref(false);
 const route = useRoute();
 const router = useRouter();
 const db = getFirestore();
 const storage = getStorage();
+
+const options = reactive({
+  allowFullscreen: false,
+  allowToSkipTransition: false,
+  autohideTime: 2500,
+  autoplay: false,
+  bindKeys: false,
+  delay: 5000,
+  enableGestures: false,
+  infinite: false,
+  lazyLoad: false,
+  lazyLoadAfter: 3,
+});
+
+const transitions = shallowReactive([Slide]);
 
 // Fetch product and variations
 const fetchProductDetails = async () => {
@@ -85,36 +98,40 @@ const fetchProductDetails = async () => {
 
   if (productSnap.exists()) {
     const productData = productSnap.data();
-    product.value = { ...productData, id: productId }; // Add the product ID here
+    product.value = { ...productData, id: productId };
 
-    // Fetch variations (quality and colors)
+    // Fetch variations with `quality` as document ID
     const variationsSnap = await getDocs(collection(productRef, 'variations'));
-    variations.value = variationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    variations.value = variationsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     if (variations.value.length > 0) {
-      selectedVariation.value = variations.value[0]; // Default to first variation
-      selectedColor.value = Object.keys(selectedVariation.value.colors)[0]; // Default to first color
-    }
-
-    // Fetch the product image
-    if (productData.imagePath) {
-      const storageReference = storageRef(storage, productData.imagePath);
-      imageUrl.value = await getDownloadURL(storageReference);
+      selectedVariation.value = variations.value[0];
+      selectedColor.value = Object.keys(selectedVariation.value.colors)[0];
+      updateColorImages(); // Update images for the default color
     }
   } else {
     console.log('Product not found');
   }
 };
 
-// Update the color options when a new variation is selected
-const updateColorOptions = () => {
-  if (selectedVariation.value) {
-    selectedColor.value = Object.keys(selectedVariation.value.colors)[0]; // Reset to default color when variation changes
+// Update images based on selected color
+const updateColorImages = async () => {
+  if (selectedVariation.value && selectedColor.value) {
+    rscs.length = 0; // Clear current images
+
+    const colorData = selectedVariation.value.colors[selectedColor.value];
+    const imagePaths = Array.isArray(colorData.imagePaths) ? colorData.imagePaths : [colorData.imagePath];
+
+    for (const path of imagePaths) {
+      const storageReference = storageRef(storage, path);
+      const url = await getDownloadURL(storageReference);
+      rscs.push(new Img(url));
+    }
   }
 };
 
 // Use the shopping cart composable
-const { addToCart } = useShoppingCart();  // Extracting addToCart from the composable
+const { addToCart } = useShoppingCart();
 
 // Navigate back to dashboard
 const goBack = () => {
@@ -122,21 +139,19 @@ const goBack = () => {
 };
 
 // Handle adding to cart
-const handleAddToCart = () => {
+const handleAddToCart = async () => {
   if (product.value && selectedVariation.value && selectedColor.value) {
-    addToCart({
+    await addToCart({
       id: product.value.id,
       name: product.value.name,
-      price: selectedVariation.value.price,
-      variation: {  // Combine quality and color into the variation object
-        quality: selectedVariation.value.quality,
+      variation: {
+        quality: selectedVariation.value.id,
         color: selectedColor.value,
       },
-      quantity: 1, // Assuming you're adding 1 item at a time
-      imageUrl: imageUrl.value,
+      quantity: 1,
+      imageUrl: rscs[0]?.src || '',
     });
 
-    // Show alert for 3 seconds
     showAlert.value = true;
     setTimeout(() => {
       showAlert.value = false;
@@ -144,11 +159,17 @@ const handleAddToCart = () => {
   }
 };
 
-
 onMounted(() => {
   fetchProductDetails();
 });
 </script>
+
+<style scoped>
+/* Your styling remains the same */
+</style>
+
+
+
 
 
 

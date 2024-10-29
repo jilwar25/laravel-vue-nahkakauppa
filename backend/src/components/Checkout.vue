@@ -1,5 +1,10 @@
 <template>
   <div class="checkout">
+    <!-- Back to Dashboard Button -->
+    <div class="back-button-container">
+      <button class="back-button" @click="goBack">← Back to Dashboard</button>
+    </div>
+
     <h1>Checkout</h1>
     <p>Proceed with your purchase here!</p>
     <div v-for="item in cartItems" :key="`${item.id}-${item.variation.quality}-${item.variation.color}`" class="checkout-item">
@@ -9,12 +14,11 @@
           <h3 class="product-name">{{ item.name }}</h3>
           <p class="product-description">{{ item.description }}</p>
           <p class="product-variation">Laatu: {{ item.variation.quality }}, Väri: {{ item.variation.color }}</p>
-          <p class="product-price">Hinta: {{ item.price * item.quantity }} €</p>
+          <p class="product-price">Hinta: {{ item.price }} €</p>
         </div>
       </div>
       <div class="item-actions">
         <div class="quantity-control">
-          <!-- If quantity > 1, show the - button, else show the remove button -->
           <button v-if="item.quantity > 1" @click="updateQuantity(item, -1)" class="quantity-btn">-</button>
           <button v-else @click="removeFromCart(item)" class="remove-btn">
             <TrashIcon class="h-5 w-5 text-white" />
@@ -24,13 +28,13 @@
         </div>
       </div>
     </div>
-    <p class="total-amount">Total: ${{ totalAmount }}</p>
+    <p class="total-amount">Total: {{ totalAmount }} €</p>
   </div>
 </template>
 
-
 <script setup>
-import {  onMounted } from 'vue';
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
 import firebaseConfig from '../plugins/firebaseConfig';
@@ -38,7 +42,7 @@ import { initializeApp } from 'firebase/app';
 import { useShoppingCart } from '../composables/shoppingCartConfig';
 
 // Import TrashIcon from Heroicons
-import { TrashIcon } from '@heroicons/vue/24/outline'; // For solid version
+import { TrashIcon } from '@heroicons/vue/24/outline';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -47,7 +51,15 @@ const storage = getStorage(app);
 
 const { cartItems, loadCart, updateQuantity, removeFromCart, totalAmount } = useShoppingCart();
 
-// Fetch product details for each item in the cart
+// Router instance to navigate back
+const router = useRouter();
+
+// Function to go back to the Dashboard
+const goBack = () => {
+  router.push('/dashboard');
+};
+
+// Fetch product details for each item in the cart, including variation prices
 const fetchProductDetails = async (cartItem) => {
   try {
     const productRef = doc(db, 'products', cartItem.id);
@@ -57,8 +69,18 @@ const fetchProductDetails = async (cartItem) => {
       const productData = productSnap.data();
       cartItem.name = productData.name;
       cartItem.description = productData.description;
-      cartItem.price = productData.price; // Use the price from the database
 
+      // Fetch the specific variation price if price is stored in variations collection
+      const variationRef = doc(db, `products/${cartItem.id}/variations`, cartItem.variation.quality);
+      const variationSnap = await getDoc(variationRef);
+
+      if (variationSnap.exists()) {
+        cartItem.price = variationSnap.data().price;
+      } else {
+        console.error('Variation price not found for:', cartItem.variation.quality);
+      }
+
+      // Fetch the product image
       if (productData.imagePath) {
         const storageReference = storageRef(storage, productData.imagePath);
         cartItem.imageUrl = await getDownloadURL(storageReference);
@@ -74,18 +96,14 @@ const fetchProductDetails = async (cartItem) => {
 // Fetch details for all cart items on mount
 const fetchCartDetails = async () => {
   const fetchPromises = cartItems.value.map(item => fetchProductDetails(item));
-  await Promise.all(fetchPromises);  // Wait for all fetches to complete
+  await Promise.all(fetchPromises); // Wait for all fetches to complete
 };
-
-
-// Compute the total amount for all items in the cart
 
 onMounted(() => {
   loadCart();
   fetchCartDetails();
 });
 </script>
-
 
 <style scoped>
 .checkout {
@@ -142,7 +160,7 @@ onMounted(() => {
   padding: 5px 10px;
   font-size: 14px;
   cursor: pointer;
-  border-radius: 4px; /* Added to round the edges */
+  border-radius: 4px;
 }
 
 .quantity-btn:hover {
@@ -159,13 +177,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px; /* Added to round the edges */
+  border-radius: 4px;
 }
 
 .remove-btn:hover {
   background-color: #cc0000;
 }
-
 
 .total-amount {
   font-size: 1.5rem;

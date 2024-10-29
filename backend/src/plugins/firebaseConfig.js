@@ -1,4 +1,7 @@
-export default {
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
   apiKey: "AIzaSyDzVzCFGlNkkc0mdtGZosh7Zg5zDIzEtks",
   authDomain: "nahkakauppa-74e44.firebaseapp.com",
   projectId: "nahkakauppa-74e44",
@@ -7,3 +10,10 @@ export default {
   appId: "1:169300472765:web:aa3eb5ec4d15d60ddd18d4"
 };
 
+// Alustetaan Firebase sovelluksessa
+const app = initializeApp(firebaseConfig);
+
+// Firestore-instanssi nimettynä vientinä
+export const db = getFirestore(app);
+
+export default firebaseConfig;

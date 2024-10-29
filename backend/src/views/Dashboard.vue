@@ -17,80 +17,25 @@
           :visible="showCart"
           @update:visible="showCart = $event"
         />
-
-        <button
-          @click="handleSignOut"
-          v-if="isLoggedIn"
-          class="bg-red-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
-        >
-          Kirjaudu ulos
-        </button>
-
-        <button
-          @click="showLoginPopup"
-          v-else
-          class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600"
-        >
-          Kirjaudu sisään
-        </button>
       </div>
 
       <!-- Dynamically load the component based on the current route -->
       <div class="bg-white shadow rounded-lg p-6">
-        <router-view />  <!-- This will render Products or ProductDetails based on the route -->
+        <router-view /> <!-- This will render Products or ProductDetails based on the route -->
       </div>
     </div>
-
-    <!-- Popup Wrapper for Login -->
-    <PopupWrapper
-      :visible="showLogin"
-      @update:visible="showLogin = $event"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-    >
-      <!-- Login form content -->
-    </PopupWrapper>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from 'vue';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-import PopupWrapper from '../components/PopUp.vue';
+import { ref } from 'vue';
 import ShoppingCartPopup from '../components/ShoppingCartPopup.vue';
 
-const isLoggedIn = ref(false);
-const showLogin = ref(false);
 const showCart = ref(false);
-
-const emit = defineEmits(['switch-form']);
-
-const handleSignOut = async () => {
-  try {
-    await signOut(getAuth());
-    isLoggedIn.value = false;
-    resetFirebaseUi();
-    emit('switch-form', 'login');
-    console.log('User signed out');
-  } catch (error) {
-    console.error('Sign-out error:', error);
-  }
-};
-
-const showLoginPopup = () => {
-  showLogin.value = true;
-};
 
 const showCartPopup = () => {
   showCart.value = true;
 };
-
-onMounted(() => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
-    isLoggedIn.value = !!user;
-    showLogin.value = false;
-  });
-});
 </script>
 
 <style scoped>
