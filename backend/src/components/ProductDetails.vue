@@ -8,14 +8,21 @@
       <div class="left-section">
         <h1 class="text-3xl font-bold">{{ product.name }}</h1>
 
-        <!-- VueFlux Carousel for Color-based Image Selection -->
-        <VueFlux v-if="rscs.length > 0" ref="$vueFlux" :images="rscs" :options="options" :transitions="transitions" />
+        <!-- Vueper Slide Carousel for All Images -->
+        <VueperSlides fixed-height="300px" :slide-ratio="1 / 2" :gap="10">
+            <VueperSlide v-for="(slide, index) in slides" :key="index">
+              <img :src="slide.url" alt="Product Image" />
+            </VueperSlide>
+          </VueperSlides>
+
+
 
         <div class="description">
           <p class="mt-4">{{ product.description }}</p>
         </div>
       </div>
 
+      <!-- Right section for product details -->
       <div class="right-section">
         <!-- Variation Selection (e.g., Quality) -->
         <div class="variation-selection mt-4" v-if="variations.length > 0 && selectedVariation">
@@ -30,7 +37,7 @@
         <!-- Color Selection -->
         <div class="color-selection mt-4" v-if="selectedVariation && selectedVariation.colors">
           <label for="color">Choose a color:</label>
-          <select v-model="selectedColor" @change="updateColorImages">
+          <select v-model="selectedColor">
             <option v-for="color in Object.keys(selectedVariation.colors)" :key="color" :value="color">
               {{ color }}
             </option>
@@ -41,7 +48,9 @@
         <p class="text-xl font-semibold mt-4" v-if="selectedVariation">Price: {{ selectedVariation.price }} €</p>
 
         <!-- Add to Cart Button -->
-        <button class="add-to-cart-button" @click="handleAddToCart" v-if="selectedVariation && selectedColor">Add to Cart</button>
+        <button class="add-to-cart-button" @click="handleAddToCart" v-if="selectedVariation && selectedColor">
+          Add to Cart
+        </button>
 
         <!-- Custom Popup Alert -->
         <div v-if="showAlert" class="popup-alert">
@@ -50,88 +59,54 @@
       </div>
     </div>
   </div>
-
-  <div v-else>
-    <p>Loading product details...</p>
-  </div>
 </template>
 
+
+
 <script setup>
-import { VueFlux, Slide, Img } from 'vue-flux';
-import { ref, reactive, shallowReactive, onMounted } from 'vue';
+import { VueperSlides, VueperSlide } from 'vueperslides';
+import 'vueperslides/dist/vueperslides.css';
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getFirestore, doc, getDocs, collection, getDoc } from 'firebase/firestore';
-import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
+import { fetchProductDetails } from '../composables/productsFetch';
 import { useShoppingCart } from '../composables/shoppingCartConfig.js';
 
 const product = ref(null);
 const variations = ref([]);
 const selectedVariation = ref(null);
 const selectedColor = ref(null);
-const rscs = shallowReactive([]);  // Dynamic image array for VueFlux
+const imageUrls = ref([]);  // Kaikki variaatioiden kuvat
 const showAlert = ref(false);
+
 const route = useRoute();
 const router = useRouter();
-const db = getFirestore();
-const storage = getStorage();
 
-const options = reactive({
-  allowFullscreen: false,
-  allowToSkipTransition: false,
-  autohideTime: 2500,
-  autoplay: false,
-  bindKeys: false,
-  delay: 5000,
-  enableGestures: false,
-  infinite: false,
-  lazyLoad: false,
-  lazyLoadAfter: 3,
-});
-
-const transitions = shallowReactive([Slide]);
-
-// Fetch product and variations
-const fetchProductDetails = async () => {
-  const productId = route.params.id;
-  const productRef = doc(db, 'products', productId);
-  const productSnap = await getDoc(productRef);
-
-  if (productSnap.exists()) {
-    const productData = productSnap.data();
-    product.value = { ...productData, id: productId };
-
-    // Fetch variations with `quality` as document ID
-    const variationsSnap = await getDocs(collection(productRef, 'variations'));
-    variations.value = variationsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-    if (variations.value.length > 0) {
-      selectedVariation.value = variations.value[0];
-      selectedColor.value = Object.keys(selectedVariation.value.colors)[0];
-      updateColorImages(); // Update images for the default color
-    }
-  } else {
-    console.log('Product not found');
-  }
-};
-
-// Update images based on selected color
-const updateColorImages = async () => {
-  if (selectedVariation.value && selectedColor.value) {
-    rscs.length = 0; // Clear current images
-
-    const colorData = selectedVariation.value.colors[selectedColor.value];
-    const imagePaths = Array.isArray(colorData.imagePaths) ? colorData.imagePaths : [colorData.imagePath];
-
-    for (const path of imagePaths) {
-      const storageReference = storageRef(storage, path);
-      const url = await getDownloadURL(storageReference);
-      rscs.push(new Img(url));
-    }
-  }
-};
+// Kuvien lista VueperSlides, jossa kaikki värit
+const slides = ref([]);
 
 // Use the shopping cart composable
 const { addToCart } = useShoppingCart();
+
+// ProductDetails.vue
+onMounted(async () => {
+  const productId = route.params.id;
+
+  // Fetch all necessary product details
+  const details = await fetchProductDetails(productId);
+
+  // Set reactive data properties
+  product.value = details.product.value;
+  variations.value = details.variations.value;
+  selectedVariation.value = details.selectedVariation.value;
+  selectedColor.value = details.selectedColor.value;
+  imageUrls.value = details.imageUrls.value;
+
+  // Populate `slides` with image URLs
+  slides.value = imageUrls.value.map(url => ({ url: url.url }));
+  console.log("All Images loaded for VueperSlide:", slides.value);
+});
+
+
 
 // Navigate back to dashboard
 const goBack = () => {
@@ -149,7 +124,7 @@ const handleAddToCart = async () => {
         color: selectedColor.value,
       },
       quantity: 1,
-      imageUrl: rscs[0]?.src || '',
+      imageUrl: slides.value[0]?.url || '', // Use `url` instead of `src`
     });
 
     showAlert.value = true;
@@ -159,21 +134,18 @@ const handleAddToCart = async () => {
   }
 };
 
-onMounted(() => {
-  fetchProductDetails();
-});
 </script>
 
-<style scoped>
-/* Your styling remains the same */
-</style>
-
-
-
-
-
 
 <style scoped>
+
+.my-slides img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
 /* Styling for the main layout */
 .product-content {
   display: flex;
