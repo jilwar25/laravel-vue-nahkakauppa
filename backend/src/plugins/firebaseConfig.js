@@ -2,12 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDzVzCFGlNkkc0mdtGZosh7Zg5zDIzEtks",
-  authDomain: "nahkakauppa-74e44.firebaseapp.com",
-  projectId: "nahkakauppa-74e44",
-  storageBucket: "nahkakauppa-74e44.appspot.com",
-  messagingSenderId: "169300472765",
-  appId: "1:169300472765:web:aa3eb5ec4d15d60ddd18d4"
+  apiKey: "AIzaSyAm8CgN5Rkssg5tuc1mRts6lEfRDOA4W1Y",
+  authDomain: "josali.firebaseapp.com",
+  databaseURL: "https://josali-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "josali",
+  storageBucket: "josali.appspot.com",
+  messagingSenderId: "779877282776",
+  appId: "1:779877282776:web:b7865455a0804170a8f8ad",
+  measurementId: "G-GLQGEJQBEV"
 };
 
 // Alustetaan Firebase sovelluksessa

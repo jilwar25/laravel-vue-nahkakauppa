@@ -8,14 +8,24 @@
       <div class="left-section">
         <h1 class="text-3xl font-bold">{{ product.name }}</h1>
 
-        <!-- Vueper Slide Carousel for All Images -->
-        <VueperSlides fixed-height="300px" :slide-ratio="1 / 2" :gap="10">
-            <VueperSlide v-for="(slide, index) in slides" :key="index">
-              <img :src="slide.url" alt="Product Image" />
-            </VueperSlide>
-          </VueperSlides>
+        <!-- Carousel Container -->
+        <div class="carousel-container">
+          <Carousel ref="carousel" :wrap-around="true" class="my-carousel">
+            <Slide v-for="(slide, index) in slides" :key="index">
+              <img :src="slide.url" alt="Slide Image" class="product-image" />
+            </Slide>
+          </Carousel>
 
+          <!-- Left Navigation Button -->
+          <button class="carousel-button prev-button" @click="goPrev">
+            <ArrowLongLeftIcon class="icon" />
+          </button>
 
+          <!-- Right Navigation Button -->
+          <button class="carousel-button next-button" @click="goNext">
+            <ArrowLongRightIcon class="icon" />
+          </button>
+        </div>
 
         <div class="description">
           <p class="mt-4">{{ product.description }}</p>
@@ -63,31 +73,41 @@
 
 
 
+
 <script setup>
-import { VueperSlides, VueperSlide } from 'vueperslides';
-import 'vueperslides/dist/vueperslides.css';
+import 'vue3-carousel/dist/carousel.css';
+import { Carousel, Slide } from 'vue3-carousel';
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchProductDetails } from '../composables/productsFetch';
 import { useShoppingCart } from '../composables/shoppingCartConfig.js';
+import { ArrowLongLeftIcon, ArrowLongRightIcon } from '@heroicons/vue/24/outline';
 
 const product = ref(null);
 const variations = ref([]);
 const selectedVariation = ref(null);
 const selectedColor = ref(null);
-const imageUrls = ref([]);  // Kaikki variaatioiden kuvat
+const imageUrls = ref([]); // All variation images
+const slides = ref([]); // Define slides here
 const showAlert = ref(false);
 
 const route = useRoute();
 const router = useRouter();
 
-// Kuvien lista VueperSlides, jossa kaikki värit
-const slides = ref([]);
+// Carousel navigation functions
+const carousel = ref(null);
+
+function goPrev() {
+  carousel.value.prev();
+}
+
+function goNext() {
+  carousel.value.next();
+}
 
 // Use the shopping cart composable
 const { addToCart } = useShoppingCart();
 
-// ProductDetails.vue
 onMounted(async () => {
   const productId = route.params.id;
 
@@ -103,10 +123,7 @@ onMounted(async () => {
 
   // Populate `slides` with image URLs
   slides.value = imageUrls.value.map(url => ({ url: url.url }));
-  console.log("All Images loaded for VueperSlide:", slides.value);
 });
-
-
 
 // Navigate back to dashboard
 const goBack = () => {
@@ -133,18 +150,51 @@ const handleAddToCart = async () => {
     }, 3000);
   }
 };
-
 </script>
+
 
 
 <style scoped>
 
-.my-slides img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
+.carousel-container {
+  position: relative;
 }
+
+.carousel-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;  /* Set width and height for the button */
+  height: 40px;
+}
+
+.prev-button {
+  left: 10px;
+}
+
+.next-button {
+  right: 10px;
+}
+
+.carousel-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
 
 /* Styling for the main layout */
 .product-content {

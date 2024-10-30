@@ -62,6 +62,7 @@ const fetchPrice = async (productId, quality) => {
 
 // Lisätään tuote ostoskoriin
 const addToCart = async (product) => {
+  console.log("image" + selectedImageUrl);
   // Haetaan hinta Firebasesta laadun perusteella
   const price = await fetchPrice(product.id, product.variation.quality);
   
