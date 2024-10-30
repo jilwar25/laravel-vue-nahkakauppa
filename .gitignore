@@ -18,6 +18,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-/backend/src/plugins/firebaseConfig
+/backend/src/plugins/firebaseConfig.js
 /backend/node_modules
 node_modules/
